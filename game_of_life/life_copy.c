@@ -1,121 +1,115 @@
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <string.h>
 
-typedef struct s_pen {
+typedef struct {
 	int x;
 	int y;
-	int is_draw;
+	int is_drav;
 } t_pen;
 
-char **new_tab(int width, int height)
+char **new_tab(int rows, int cols)
 {
-	char **tab = malloc(sizeof(char *) * height);
-	for (int i = 0; i < height; i++)
+	char **tab = calloc(sizeof(char *), rows);
+	if (!tab)
+		return 0;
+	for (int i = 0; i < rows; i++)
 	{
-		tab[i] = calloc(sizeof(char), width);
-		for (int j = 0; j < width; j++)
+		tab[i] = calloc(sizeof(char), cols + 1);
+		if (!tab[i])
+			return 0;
+		for (int j = 0; j < cols; j++)
 			tab[i][j] = ' ';
 	}
 	return tab;
 }
 
-void print_tab(char **tab, int width, int height)
+void free_map(char **map, int rows)
 {
-	for(int i = 0; i < height; i++)
+	for (int i = 0; i < rows; i++)
+		free(map[i]);
+	free(map);
+}
+
+void print_map(char **map, int rows, int cols)
+{	
+	for (int i = 0; i < rows; i++)
 	{
-		for (int j = 0; j < width; j++)
-		{
-			putchar(tab[i][j]);
-		}
+		for (int j = 0; j < cols; j++)
+			putchar(map[i][j]);
 		putchar('\n');
 	}
 }
 
-int count_voisins(char **tab, int x, int y, int width, int height)
+int count_c(char **map, int x, int y, int rows, int cols)
 {
 	int count = 0;
-	for (int i = -1; i <= 1; i++)
-	{
-		for (int j = -1; j <= 1; j++)
+	for (int i = -1; i <= 1; i++){
+		for(int j = -1; j <= 1; j++)
 		{
 			if (i == 0 && j == 0)
 				continue;
-			
 			int new_y = y + i;
 			int new_x = x + j;
-			if (new_x >= 0 && new_x < width && new_y >= 0 && new_y < height)
-				if (tab[new_y][new_x] == '0')
+			if (new_x >= 0 && new_x < cols && new_y >= 0 && new_y < rows)
+				if (map[new_y][new_x] == '0')
 					count++;
 		}
 	}
-	return count;
+	return count; 
 }
 
-void free_tab(char **tab, int height)
+void iter_map(char **map, int rows, int cols)
 {
-	for (int i = 0; i < height; i++)
-		free(tab[i]);
-	free(tab);
-}
-
-void iter_map(char **tab, int width, int height)
-{
-	char **n_tab = new_tab(width, height);
-	for (int y = 0; y < height; y++)
+	char **new_map = new_tab(rows, cols);
+	for (int y = 0; y < rows; y++)
 	{
-		for (int x = 0; x < width; x++)
+		for (int x = 0; x < cols; x++)
 		{
-			int count = count_voisins(tab, x, y, width, height);
-			if (tab[y][x] == '0')
+			int count = count_c(map, x, y, rows, cols);
+			if (map[y][x] == '0')
 			{
 				if (count == 2 || count == 3)
-				{
-					n_tab[y][x] = '0';
-				}
+					new_map[y][x] = '0';
 			}
 			else
 			{
 				if (count == 3)
-					n_tab[y][x] = '0';
+					new_map[y][x] = '0';
 			}
 		}
 	}
-	for (int i = 0; i < height; i++)
-	{
-		for (int j = 0; j < width; j++)
-		{
-			tab[i][j] = n_tab[i][j];
-		}
-	}
-	free_tab(n_tab, height);
+	for (int i = 0; i < rows; i++)
+		for (int j = 0; j < cols; j++)
+			map[i][j] = new_map[i][j];
+	free_map(new_map, rows);
 }
 
 int main(int ac, char **av)
 {
 	if (ac != 4)
-		return 1;
-
-	int width = atoi(av[1]);
-	int height = atoi(av[2]);
+		return 0;
+	t_pen pen = {0, 0, 0};
+	int cols = atoi(av[1]);
+	int rows = atoi(av[2]);
 	int iter = atoi(av[3]);
-	char **tab = new_tab(width, height);
-	t_pen pen = {0,0,0};
-	char command;
-
-	while (read(0, &command, 1) > 0)
+	char **tab = new_tab(rows, cols);
+	if (!tab)
+		return 0;
+	char comand;
+	while (read(0, &comand, 1) > 0)
 	{
-		if (pen.is_draw)
+		if (pen.is_drav)
 			tab[pen.y][pen.x] = '0';
-
-		switch(command)
+		switch (comand)
 		{
 			case 'w':
 				if (pen.y > 0)
 					pen.y--;
 				break;
 			case 's':
-				if (pen.y < height - 1)
+				if (pen.y < rows - 1)
 					pen.y++;
 				break;
 			case 'a':
@@ -123,17 +117,18 @@ int main(int ac, char **av)
 					pen.x--;
 				break;
 			case 'd':
-				if (pen.x < width - 1)
+				if (pen.x < cols - 1)
 					pen.x++;
 				break;
 			case 'x':
-				pen.is_draw = !pen.is_draw;
+				pen.is_drav = !pen.is_drav;
 				break;
 		}
 	}
-	for (int it = 0; it < iter; it++)
-		iter_map(tab, width, height);
-	print_tab(tab, width, height);
-	free_tab(tab, height);
+
+	for (int i = 0; i < iter; i++)
+		iter_map(tab, rows, cols);
+	print_map(tab, rows, cols);
+	free_map(tab, rows);
 	return 0;
 }

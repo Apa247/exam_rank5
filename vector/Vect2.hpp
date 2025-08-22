@@ -11,12 +11,8 @@ class vect2 {
         vect2(int a, int b) : x(a), y(b) {}
         ~vect2() {}
 
-        void print(std::ostream& os) const {
-            os << "{" << x << ", " << y << "}" << std::endl;
-        }
-
         friend std::ostream& operator<<(std::ostream& os, const vect2& vec) {
-            vec.print(os);
+            os << "{" << vec.x << ", " << vec.y << "}" << std::endl;
             return os;
         }
         
