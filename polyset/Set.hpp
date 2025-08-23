@@ -7,7 +7,7 @@ class Set  {
 		SearchableBag *bag;
 
 	public:
-		Set(SearchableBag* b) : bag(b) {}
+		Set(SearchableBag& b) : bag(&b) {}
 		Set(const Set& other) : bag(other.bag) {}
 		~Set() {}
 		Set& operator=(const Set& other) {
@@ -32,5 +32,9 @@ class Set  {
 		}
 		void clear() {
 			bag->clear();
+		}
+
+		SearchableBag& get_bag() const {
+			return *bag;
 		}
 };
